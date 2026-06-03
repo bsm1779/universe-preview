@@ -1,157 +1,284 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="utf-8">
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Galaxy Preview</title>
+<title>Galaxy Web Preview v0.2</title>
+
 <style>
-html,body{
-margin:0;
-overflow:hidden;
-background:black;
+html, body {
+    margin: 0;
+    overflow: hidden;
+    background: black;
+    font-family: Arial, sans-serif;
+    color: white;
 }
-canvas{
-display:block;
+
+canvas {
+    display: block;
 }
-#ui{
-position:absolute;
-top:15px;
-left:15px;
-color:white;
-font-family:Arial;
-background:rgba(0,0,0,0.4);
-padding:12px;
-border-radius:12px;
+
+#ui {
+    position: absolute;
+    top: 18px;
+    left: 18px;
+    z-index: 10;
+    background: rgba(0,0,0,0.38);
+    border: 1px solid rgba(255,255,255,0.08);
+    padding: 14px 18px;
+    border-radius: 14px;
+    backdrop-filter: blur(8px);
+}
+
+.title {
+    font-size: 20px;
+    margin-bottom: 8px;
+}
+
+.info {
+    opacity: 0.82;
+    margin-top: 4px;
+}
+
+.seed {
+    color: #8fb8ff;
+}
+
+.year {
+    color: #ffd7a3;
 }
 </style>
 </head>
 <body>
 
 <div id="ui">
-<div>Galaxy Web Preview v0.1</div>
-<div id="stats"></div>
+    <div class="title">Galaxy Web Preview v0.2</div>
+    <div class="info seed">Seed: 882341</div>
+    <div class="info" id="starCount"></div>
+    <div class="info year" id="yearText"></div>
 </div>
 
-<canvas id="c"></canvas>
+<canvas id="canvas"></canvas>
 
 <script>
-const canvas=document.getElementById("c");
-const ctx=canvas.getContext("2d");
 
-function resize(){
-canvas.width=window.innerWidth;
-canvas.height=window.innerHeight;
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
 }
 resize();
-window.addEventListener("resize",resize);
 
-let stars=[];
-const ARM_COUNT=4;
-const STAR_COUNT=14000;
+window.addEventListener("resize", resize);
 
-function rand(a,b){
-return Math.random()*(b-a)+a;
+let zoom = 1;
+let year = 12000000;
+
+window.addEventListener("wheel", (e) => {
+
+    e.preventDefault();
+
+    if (e.deltaY < 0) {
+        zoom *= 1.08;
+    } else {
+        zoom *= 0.92;
+    }
+
+    zoom = Math.max(0.15, Math.min(zoom, 7));
+
+}, { passive: false });
+
+const stars = [];
+const nebulae = [];
+
+const STAR_COUNT = 28000;
+const ARM_COUNT = 4;
+
+function rand(min, max) {
+    return Math.random() * (max - min) + min;
 }
 
-function createGalaxy(){
+function createNebulae() {
 
-for(let i=0;i<3000;i++){
+    for (let i = 0; i < 14; i++) {
 
-let angle=rand(0,Math.PI*2);
-let radius=Math.sqrt(Math.random())*120;
-
-stars.push({
-x:Math.cos(angle)*radius,
-y:Math.sin(angle)*radius,
-size:rand(0.5,1.8),
-color:"255,220,180"
-});
+        nebulae.push({
+            x: rand(-700, 700),
+            y: rand(-700, 700),
+            radius: rand(120, 280),
+            color: Math.random() > 0.5
+                ? "120,140,255"
+                : "170,120,255"
+        });
+    }
 }
 
-for(let arm=0;arm<ARM_COUNT;arm++){
+function createGalaxy() {
 
-let offset=(Math.PI*2/ARM_COUNT)*arm;
+    for (let i = 0; i < 7000; i++) {
 
-for(let i=0;i<STAR_COUNT;i++){
+        const angle = rand(0, Math.PI * 2);
+        const radius = Math.pow(Math.random(), 0.55) * 140;
 
-let t=i/STAR_COUNT*10*Math.PI;
-let radius=25*t;
+        stars.push({
+            orbitalRadius: radius,
+            orbitalAngle: angle,
+            orbitalSpeed: 0.00008 + rand(0, 0.00003),
 
-let angle=t+offset;
+            size: rand(0.4, 2.4),
+            brightness: rand(0.4, 1),
 
-let spread=rand(-40,40);
+            type: "core"
+        });
+    }
 
-let x=Math.cos(angle)*(radius+spread);
-let y=Math.sin(angle)*(radius+spread);
+    for (let arm = 0; arm < ARM_COUNT; arm++) {
 
-let color="180,220,255";
+        const armOffset = (Math.PI * 2 / ARM_COUNT) * arm;
 
-if(radius<180){
-color="255,220,180";
+        for (let i = 0; i < STAR_COUNT; i++) {
+
+            const t = i / STAR_COUNT * 11 * Math.PI;
+
+            const radius = 22 * t;
+
+            const angle = t * 0.34 + armOffset;
+
+            const spread = rand(-26, 26);
+
+            if (Math.random() < 0.08) continue;
+
+            stars.push({
+
+                orbitalRadius: radius + spread,
+                orbitalAngle: angle,
+
+                orbitalSpeed:
+                    (0.00012 / Math.max(radius * 0.01, 1))
+                    + rand(0, 0.00002),
+
+                size: rand(0.3, 1.8),
+                brightness: rand(0.3, 1),
+
+                type: radius < 240 ? "young" : "outer"
+            });
+        }
+    }
 }
 
-stars.push({
-x,y,
-size:rand(0.4,1.4),
-color
-});
-}
-}
-}
-
+createNebulae();
 createGalaxy();
 
-document.getElementById("stats").innerText =
-"Stars: "+stars.length;
+document.getElementById("starCount").innerText =
+    "Stars: " + stars.length.toLocaleString();
 
-let zoom=1;
-let rotation=0;
+function starColor(star) {
 
-window.addEventListener("wheel",(e)=>{
-e.preventDefault();
+    if (star.type === "core") {
+        return `rgba(255,220,185,${star.brightness})`;
+    }
 
-if(e.deltaY<0){
-zoom*=1.1;
-}else{
-zoom*=0.9;
+    if (star.type === "young") {
+        return `rgba(180,210,255,${star.brightness})`;
+    }
+
+    return `rgba(210,220,255,${star.brightness * 0.7})`;
 }
 
-zoom=Math.max(0.2,Math.min(zoom,5));
-},{passive:false});
+function drawNebulae(cx, cy) {
 
-function draw(){
+    for (const n of nebulae) {
 
-ctx.fillStyle="rgba(0,0,0,0.2)";
-ctx.fillRect(0,0,canvas.width,canvas.height);
+        const gradient = ctx.createRadialGradient(
+            cx + n.x * zoom,
+            cy + n.y * zoom,
+            0,
+            cx + n.x * zoom,
+            cy + n.y * zoom,
+            n.radius * zoom
+        );
 
-let cx=canvas.width/2;
-let cy=canvas.height/2;
+        gradient.addColorStop(0,
+            `rgba(${n.color},0.08)`);
 
-rotation += 0.00012;
+        gradient.addColorStop(1,
+            `rgba(${n.color},0)`);
 
-for(let s of stars){
+        ctx.fillStyle = gradient;
 
-let rx=
-s.x*Math.cos(rotation)-
-s.y*Math.sin(rotation);
+        ctx.beginPath();
 
-let ry=
-s.x*Math.sin(rotation)+
-s.y*Math.cos(rotation);
+        ctx.arc(
+            cx + n.x * zoom,
+            cy + n.y * zoom,
+            n.radius * zoom,
+            0,
+            Math.PI * 2
+        );
 
-let sx=cx+rx*zoom;
-let sy=cy+ry*zoom;
-
-ctx.beginPath();
-ctx.fillStyle=`rgba(${s.color},0.9)`;
-ctx.arc(sx,sy,s.size*zoom,0,Math.PI*2);
-ctx.fill();
+        ctx.fill();
+    }
 }
 
-requestAnimationFrame(draw);
+function draw() {
+
+    ctx.fillStyle = "rgba(0,0,0,0.16)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const cx = canvas.width / 2;
+    const cy = canvas.height / 2;
+
+    drawNebulae(cx, cy);
+
+    for (const star of stars) {
+
+        star.orbitalAngle += star.orbitalSpeed;
+
+        const rx =
+            Math.cos(star.orbitalAngle)
+            * star.orbitalRadius;
+
+        const ry =
+            Math.sin(star.orbitalAngle)
+            * star.orbitalRadius;
+
+        const sx = cx + rx * zoom;
+        const sy = cy + ry * zoom;
+
+        const size = star.size * zoom;
+
+        if (
+            sx < -10 || sx > canvas.width + 10 ||
+            sy < -10 || sy > canvas.height + 10
+        ) continue;
+
+        ctx.beginPath();
+
+        ctx.fillStyle = starColor(star);
+
+        ctx.arc(
+            sx,
+            sy,
+            size,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+    }
+
+    year += 120;
+
+    document.getElementById("yearText").innerText =
+        "Year: " + Math.floor(year).toLocaleString();
+
+    requestAnimationFrame(draw);
 }
 
 draw();
+
 </script>
 
 </body>
