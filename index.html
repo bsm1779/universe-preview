@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Galaxy Web Preview v0.3</title>
+<title>Galaxy Web Preview v0.4</title>
 
 <style>
 html, body {
@@ -25,13 +25,13 @@ canvas {
     left: 18px;
     z-index: 10;
 
-    background: rgba(0,0,0,0.35);
+    background: rgba(0,0,0,0.34);
     border: 1px solid rgba(255,255,255,0.08);
 
     padding: 14px 18px;
-    border-radius: 16px;
+    border-radius: 18px;
 
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(12px);
 }
 
 .title {
@@ -52,19 +52,19 @@ canvas {
     color: #ffd7a3;
 }
 
-.life {
-    color: #b9ffd2;
+.status {
+    color: #b8ffd6;
 }
 </style>
 </head>
 <body>
 
 <div id="ui">
-    <div class="title">Galaxy Web Preview v0.3</div>
+    <div class="title">Galaxy Web Preview v0.4</div>
     <div class="info seed">Seed: 882341</div>
     <div class="info" id="starCount"></div>
     <div class="info year" id="yearText"></div>
-    <div class="info life">Status: Galactic Drift Active</div>
+    <div class="info status">Status: Stellar Ocean Drift</div>
 </div>
 
 <canvas id="canvas"></canvas>
@@ -85,17 +85,6 @@ window.addEventListener("resize", resize);
 let zoom = 1;
 let year = 12000000;
 
-const stars = [];
-const dust = [];
-const nebulae = [];
-
-const STAR_COUNT = 26000;
-const ARM_COUNT = 4;
-
-function rand(min, max) {
-    return Math.random() * (max - min) + min;
-}
-
 window.addEventListener("wheel", (e) => {
 
     e.preventDefault();
@@ -110,18 +99,47 @@ window.addEventListener("wheel", (e) => {
 
 }, { passive: false });
 
+function rand(min, max) {
+    return Math.random() * (max - min) + min;
+}
+
+const stars = [];
+const nebulae = [];
+const dust = [];
+const farStars = [];
+
+const STAR_COUNT = 32000;
+const ARM_COUNT = 4;
+
+function createBackgroundStars() {
+
+    for (let i = 0; i < 3000; i++) {
+
+        farStars.push({
+
+            x: rand(-5000, 5000),
+            y: rand(-5000, 5000),
+
+            size: rand(0.3, 1.5),
+
+            alpha: rand(0.1, 0.8)
+        });
+    }
+}
+
 function createNebulae() {
 
-    for (let i = 0; i < 18; i++) {
+    for (let i = 0; i < 20; i++) {
 
         nebulae.push({
 
-            x: rand(-1000, 1000),
-            y: rand(-1000, 1000),
+            x: rand(-1200, 1200),
+            y: rand(-1200, 1200),
 
-            radius: rand(180, 420),
+            radius: rand(220, 520),
 
-            drift: rand(-0.02, 0.02),
+            driftX: rand(-0.03, 0.03),
+            driftY: rand(-0.03, 0.03),
 
             color:
                 Math.random() > 0.5
@@ -133,30 +151,31 @@ function createNebulae() {
 
 function createDust() {
 
-    for (let i = 0; i < 1600; i++) {
+    for (let i = 0; i < 2500; i++) {
 
         dust.push({
 
-            x: rand(-2200, 2200),
-            y: rand(-2200, 2200),
+            x: rand(-3000, 3000),
+            y: rand(-3000, 3000),
 
-            size: rand(0.2, 1.4),
+            size: rand(0.2, 1.5),
 
-            alpha: rand(0.04, 0.22),
+            alpha: rand(0.02, 0.18),
 
-            driftX: rand(-0.02, 0.02),
-            driftY: rand(-0.02, 0.02)
+            speed: rand(0.01, 0.08)
         });
     }
 }
 
 function createGalaxy() {
 
-    // Core
-    for (let i = 0; i < 7000; i++) {
+    // core
+    for (let i = 0; i < 9000; i++) {
 
         const angle = rand(0, Math.PI * 2);
-        const radius = Math.pow(Math.random(), 0.55) * 120;
+
+        const radius =
+            Math.pow(Math.random(), 0.58) * 140;
 
         stars.push({
 
@@ -164,11 +183,12 @@ function createGalaxy() {
             orbitalAngle: angle,
 
             orbitalSpeed:
-                0.0007 / Math.max(radius * 0.03, 1),
+                0.0025 /
+                Math.max(radius * 0.025, 1),
 
-            size: rand(0.4, 2.5),
+            size: rand(0.5, 2.8),
 
-            brightness: rand(0.4, 1),
+            brightness: rand(0.5, 1),
 
             pulse: rand(0, Math.PI * 2),
 
@@ -176,7 +196,7 @@ function createGalaxy() {
         });
     }
 
-    // Arms
+    // spiral arms
     for (let arm = 0; arm < ARM_COUNT; arm++) {
 
         const armOffset =
@@ -187,15 +207,15 @@ function createGalaxy() {
             const t =
                 i / STAR_COUNT * 14 * Math.PI;
 
-            const radius = 20 * t;
+            const radius = 24 * t;
 
             const spiral =
-                t * 0.28 + armOffset;
+                t * 0.34 + armOffset;
 
             const spread =
-                rand(-18, 18);
+                rand(-20, 20);
 
-            if (Math.random() < 0.1) continue;
+            if (Math.random() < 0.12) continue;
 
             stars.push({
 
@@ -206,11 +226,11 @@ function createGalaxy() {
                     spiral,
 
                 orbitalSpeed:
-                    0.001 /
-                    Math.max(radius * 0.025, 1),
+                    0.004 /
+                    Math.max(radius * 0.03, 1),
 
                 size:
-                    rand(0.25, 1.9),
+                    rand(0.2, 1.9),
 
                 brightness:
                     rand(0.2, 1),
@@ -219,7 +239,7 @@ function createGalaxy() {
                     rand(0, Math.PI * 2),
 
                 type:
-                    radius < 260
+                    radius < 300
                     ? "young"
                     : "outer"
             });
@@ -227,6 +247,7 @@ function createGalaxy() {
     }
 }
 
+createBackgroundStars();
 createNebulae();
 createDust();
 createGalaxy();
@@ -244,21 +265,46 @@ function starColor(star, pulse) {
         return `rgba(180,210,255,${pulse})`;
     }
 
-    return `rgba(220,230,255,${pulse * 0.8})`;
+    return `rgba(220,230,255,${pulse * 0.7})`;
 }
 
 let cameraTime = 0;
+
+function drawFarStars(cx, cy) {
+
+    for (const s of farStars) {
+
+        ctx.beginPath();
+
+        ctx.fillStyle =
+            `rgba(255,255,255,${s.alpha})`;
+
+        ctx.arc(
+            cx + s.x * 0.03,
+            cy + s.y * 0.03,
+            s.size,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+    }
+}
 
 function drawNebulae(cx, cy) {
 
     for (const n of nebulae) {
 
-        n.x += n.drift;
+        n.x += n.driftX;
+        n.y += n.driftY;
 
-        const gradient = ctx.createRadialGradient(
+        const gradient =
+            ctx.createRadialGradient(
+
             cx + n.x * zoom,
             cy + n.y * zoom,
             0,
+
             cx + n.x * zoom,
             cy + n.y * zoom,
             n.radius * zoom
@@ -294,8 +340,11 @@ function drawDust(cx, cy) {
 
     for (const d of dust) {
 
-        d.x += d.driftX;
-        d.y += d.driftY;
+        d.x += d.speed;
+
+        if (d.x > 3000) {
+            d.x = -3000;
+        }
 
         ctx.beginPath();
 
@@ -303,8 +352,8 @@ function drawDust(cx, cy) {
             `rgba(255,255,255,${d.alpha})`;
 
         ctx.arc(
-            cx + d.x * zoom * 0.3,
-            cy + d.y * zoom * 0.3,
+            cx + d.x * 0.15,
+            cy + d.y * 0.15,
             d.size,
             0,
             Math.PI * 2
@@ -316,7 +365,8 @@ function drawDust(cx, cy) {
 
 function draw() {
 
-    ctx.fillStyle = "rgba(0,0,0,0.12)";
+    // trail fade
+    ctx.fillStyle = "rgba(0,0,0,0.06)";
     ctx.fillRect(
         0,
         0,
@@ -324,13 +374,13 @@ function draw() {
         canvas.height
     );
 
-    cameraTime += 0.0015;
+    cameraTime += 0.0025;
 
     const cameraX =
-        Math.sin(cameraTime) * 40;
+        Math.sin(cameraTime * 0.8) * 60;
 
     const cameraY =
-        Math.cos(cameraTime * 0.8) * 28;
+        Math.cos(cameraTime * 0.5) * 42;
 
     const cx =
         canvas.width / 2 + cameraX;
@@ -338,6 +388,7 @@ function draw() {
     const cy =
         canvas.height / 2 + cameraY;
 
+    drawFarStars(cx, cy);
     drawNebulae(cx, cy);
     drawDust(cx, cy);
 
@@ -361,27 +412,44 @@ function draw() {
             cy + ry * zoom;
 
         if (
-            sx < -50 ||
-            sx > canvas.width + 50 ||
-            sy < -50 ||
-            sy > canvas.height + 50
+            sx < -100 ||
+            sx > canvas.width + 100 ||
+            sy < -100 ||
+            sy > canvas.height + 100
         ) continue;
 
         const pulse =
             star.brightness *
-            (0.75 + Math.sin(
-                performance.now() * 0.001
+            (0.72 + Math.sin(
+                performance.now() * 0.0015
                 + star.pulse
-            ) * 0.25);
+            ) * 0.28);
 
+        const size =
+            star.size * zoom *
+            (0.95 + pulse * 0.15);
+
+        // glow
+        ctx.beginPath();
+
+        ctx.fillStyle =
+            starColor(star, pulse * 0.12);
+
+        ctx.arc(
+            sx,
+            sy,
+            size * 2.8,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+
+        // star
         ctx.beginPath();
 
         ctx.fillStyle =
             starColor(star, pulse);
-
-        const size =
-            star.size * zoom *
-            (0.92 + pulse * 0.12);
 
         ctx.arc(
             sx,
@@ -394,7 +462,48 @@ function draw() {
         ctx.fill();
     }
 
-    year += 240;
+    // core pulse
+    const pulse =
+        80 +
+        Math.sin(
+            performance.now() * 0.001
+        ) * 18;
+
+    const gradient =
+        ctx.createRadialGradient(
+            cx,
+            cy,
+            0,
+            cx,
+            cy,
+            pulse * zoom
+        );
+
+    gradient.addColorStop(
+        0,
+        "rgba(255,220,180,0.08)"
+    );
+
+    gradient.addColorStop(
+        1,
+        "rgba(255,220,180,0)"
+    );
+
+    ctx.fillStyle = gradient;
+
+    ctx.beginPath();
+
+    ctx.arc(
+        cx,
+        cy,
+        pulse * zoom,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+    year += 320;
 
     document.getElementById("yearText").innerText =
         "Year: " +
