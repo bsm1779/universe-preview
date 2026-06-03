@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Galaxy Preview</title>
+<style>
+html,body{
+margin:0;
+overflow:hidden;
+background:black;
+}
+canvas{
+display:block;
+}
+#ui{
+position:absolute;
+top:15px;
+left:15px;
+color:white;
+font-family:Arial;
+background:rgba(0,0,0,0.4);
+padding:12px;
+border-radius:12px;
+}
+</style>
+</head>
+<body>
+
+<div id="ui">
+<div>Galaxy Web Preview v0.1</div>
+<div id="stats"></div>
+</div>
+
+<canvas id="c"></canvas>
+
+<script>
+const canvas=document.getElementById("c");
+const ctx=canvas.getContext("2d");
+
+function resize(){
+canvas.width=window.innerWidth;
+canvas.height=window.innerHeight;
+}
+resize();
+window.addEventListener("resize",resize);
+
+let stars=[];
+const ARM_COUNT=4;
+const STAR_COUNT=14000;
+
+function rand(a,b){
+return Math.random()*(b-a)+a;
+}
+
+function createGalaxy(){
+
+for(let i=0;i<3000;i++){
+
+let angle=rand(0,Math.PI*2);
+let radius=Math.sqrt(Math.random())*120;
+
+stars.push({
+x:Math.cos(angle)*radius,
+y:Math.sin(angle)*radius,
+size:rand(0.5,1.8),
+color:"255,220,180"
+});
+}
+
+for(let arm=0;arm<ARM_COUNT;arm++){
+
+let offset=(Math.PI*2/ARM_COUNT)*arm;
+
+for(let i=0;i<STAR_COUNT;i++){
+
+let t=i/STAR_COUNT*10*Math.PI;
+let radius=25*t;
+
+let angle=t+offset;
+
+let spread=rand(-40,40);
+
+let x=Math.cos(angle)*(radius+spread);
+let y=Math.sin(angle)*(radius+spread);
+
+let color="180,220,255";
+
+if(radius<180){
+color="255,220,180";
+}
+
+stars.push({
+x,y,
+size:rand(0.4,1.4),
+color
+});
+}
+}
+}
+
+createGalaxy();
+
+document.getElementById("stats").innerText =
+"Stars: "+stars.length;
+
+let zoom=1;
+let rotation=0;
+
+window.addEventListener("wheel",(e)=>{
+e.preventDefault();
+
+if(e.deltaY<0){
+zoom*=1.1;
+}else{
+zoom*=0.9;
+}
+
+zoom=Math.max(0.2,Math.min(zoom,5));
+},{passive:false});
+
+function draw(){
+
+ctx.fillStyle="rgba(0,0,0,0.2)";
+ctx.fillRect(0,0,canvas.width,canvas.height);
+
+let cx=canvas.width/2;
+let cy=canvas.height/2;
+
+rotation += 0.00012;
+
+for(let s of stars){
+
+let rx=
+s.x*Math.cos(rotation)-
+s.y*Math.sin(rotation);
+
+let ry=
+s.x*Math.sin(rotation)+
+s.y*Math.cos(rotation);
+
+let sx=cx+rx*zoom;
+let sy=cy+ry*zoom;
+
+ctx.beginPath();
+ctx.fillStyle=`rgba(${s.color},0.9)`;
+ctx.arc(sx,sy,s.size*zoom,0,Math.PI*2);
+ctx.fill();
+}
+
+requestAnimationFrame(draw);
+}
+
+draw();
+</script>
+
+</body>
+</html>
